@@ -1,0 +1,57 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ผู้ใช้ที่ล็อกอินแล้วสามารถอ่านและเขียนข้อมูลของตัวเองได้
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+      // อนุญาตให้อ่านข้อมูลผู้ใช้สำหรับการแสดงในแชท
+      allow read: if request.auth != null;
+    }
+    
+    // กฎสำหรับร้านค้า
+    match /shops/{shopId} {
+      // ใครก็ตามสามารถอ่านข้อมูลร้านค้าได้
+      allow read: if true;
+      // เฉพาะเจ้าของร้านเท่านั้นที่สามารถเขียนข้อมูลได้
+      allow write: if request.auth != null && 
+                    request.auth.uid == resource.data.ownerId;
+    }
+    
+    // กฎสำหรับห้องแชท
+    match /chatRooms/{roomId} {
+      // ผู้ใช้สามารถอ่านห้องแชทที่ตัวเองเป็นส่วนหนึ่งได้
+      allow read: if request.auth != null && 
+                  (request.auth.uid == resource.data.shopOwnerId || 
+                   request.auth.uid == resource.data.customerId);
+      
+      // ผู้ใช้สามารถสร้างห้องแชทได้
+      allow create: if request.auth != null && 
+                    (request.auth.uid == request.resource.data.shopOwnerId || 
+                     request.auth.uid == request.resource.data.customerId);
+      
+      // ผู้ใช้สามารถอัปเดตห้องแชทที่ตัวเองเป็นส่วนหนึ่งได้
+      allow update: if request.auth != null && 
+                    (request.auth.uid == resource.data.shopOwnerId || 
+                     request.auth.uid == resource.data.customerId);
+      
+      // กฎสำหรับข้อความในห้องแชท
+      match /messages/{messageId} {
+        // ผู้ใช้สามารถอ่านข้อความในห้องแชทที่ตัวเองเป็นส่วนหนึ่งได้
+        allow read: if request.auth != null && 
+                    (request.auth.uid == get(/databases/$(database)/documents/chatRooms/$(roomId)).data.shopOwnerId || 
+                     request.auth.uid == get(/databases/$(database)/documents/chatRooms/$(roomId)).data.customerId);
+        
+        // ผู้ใช้สามารถสร้างข้อความในห้องแชทที่ตัวเองเป็นส่วนหนึ่งได้
+        allow create: if request.auth != null && 
+                      (request.auth.uid == get(/databases/$(database)/documents/chatRooms/$(roomId)).data.shopOwnerId || 
+                       request.auth.uid == get(/databases/$(database)/documents/chatRooms/$(roomId)).data.customerId) &&
+                      request.auth.uid == request.resource.data.senderId;
+        
+        // ผู้ใช้สามารถอัปเดตข้อความที่ตัวเองส่งได้
+        allow update: if request.auth != null && 
+                      (request.auth.uid == resource.data.senderId ||
+                       request.auth.uid == resource.data.receiverId);
+      }
+    }
+  }
+}
