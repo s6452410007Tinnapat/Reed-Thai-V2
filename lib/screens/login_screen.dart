@@ -203,15 +203,15 @@ class _LoginScreenState extends State<LoginScreen> {
                     },
                   ),
                   const SizedBox(height: 8),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton(
-                      onPressed: () {
-                        // ฟังก์ชันลืมรหัสผ่าน
-                      },
-                      child: const Text('ลืมรหัสผ่าน?'),
-                    ),
-                  ),
+                  // Align(
+                  //   alignment: Alignment.centerRight,
+                  //   child: TextButton(
+                  //     onPressed: () {
+                  //       // ฟังก์ชันลืมรหัสผ่าน
+                  //     },
+                  //     child: const Text('ลืมรหัสผ่าน?'),
+                  //   ),
+                  // ),
                   const SizedBox(height: 24),
                   ElevatedButton(
                     onPressed: _isLoading ? null : _login,
